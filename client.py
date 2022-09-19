@@ -12,7 +12,7 @@ screen_width = None
 screen_height = None
 
 SERVER = None
-PORT  = 8080
+PORT  = 8000
 IP_ADDRESS = '127.0.0.1'
 playerName = None
 
@@ -25,59 +25,42 @@ gameWindow = None
 
 ticketGrid  = []
 currentNumberList = []
-markedNumberList = []
 flashNumberList = []
 flashNumberLabel = None
-gameOver = False
 
-def showWrongMarking():
+
+def createTicket():
+    global gameWindow
     global ticketGrid
-    global flashNumberList
+    mianLable = Label(gameWindow, width=65, height=16,relief='ridge', borderwidth=5, bg='white')
+    mianLable.place(x=95, y=119)
 
-    for row in ticketGrid:
-        for numberBox in row:
-            if(numberBox['text']):
-                if(int(numberBox['text']) not in flashNumberList):
-                    if(platform.system() == 'Darwin'):
-                        numberBox.configure(state='disabled', disabledbackground='#f48fb1',
-                            disabledforeground="white")
-                    else:
-                        numberBox.configure(state='disabled', background='#f48fb1',
-                            foreground="white")
+    xPos = 105
+    yPos = 130
+    for row in range(0, 3):
+        rowList = []
+        for col in range(0, 9):
+            if(platform.system() == 'Darwin'):
+                boxButton = Button(gameWindow,
+                font = ("Chalkboard SE",18),
+                borderwidth=3,
+                pady=23,
+                padx=-22,
+                bg="#fff176",
+                highlightbackground='#fff176',
+                activebackground='#c5e1a5')
 
-def markNumber(button):
-    global markedNumberList
-    global flashNumberList
-    global playerName
-    global SERVER
-    global currentNumberList
-    global gameOver
-    global flashNumberLabel
-    global canvas2
 
-    buttonText = int(button['text'])
-    markedNumberList.append(buttonText)
+                boxButton.place(x=xPos, y=yPos)
+            else:
+                boxButton = tk.Button(gameWindow, font=("Chalkboard SE",30), width=3, height=2,borderwidth=5, bg="#fff176")
+                boxButton.place(x=xPos, y=yPos)
 
-    if(platform.system() == 'Darwin'):
-        button.configure(state='disabled',disabledbackground='#c5e1a5', disabledforeground="black", highlightbackground="#c5e1a5")
-    else:
-        button.configure(state='disabled',background='#c5e1a5', foreground="black")
-
-    winner =  all(item in flashNumberList for item in markedNumberList)
-
-    if(winner and sorted(currentNumberList) == sorted(markedNumberList)):
-        message = playerName + ' wins the game.'
-        SERVER.send(message.encode())
-        return
-
-    if(len(currentNumberList) == len(markedNumberList)):
-        winner =  all(item in flashNumberList for item in markedNumberList)
-        if(not winner):
-            gameOver = True
-            message = 'You Lose the Game'
-            canvas2.itemconfigure(flashNumberLabel, text = message, font = ('Chalkboard SE', 40))
-            showWrongMarking()
-
+            rowList.append(boxButton)
+            xPos += 64
+        ticketGrid.append(rowList)
+        xPos = 105
+        yPos +=82
 
 
 def placeNumbers():
@@ -113,53 +96,11 @@ def placeNumbers():
                 numberBox = ticketGrid[row][colNum]
                 numberBox.configure(text=randomNumber, fg="black")
                 currentNumberList.append(randomNumber)
-
                 counter+=1
-
     for row in ticketGrid:
         for numberBox in row:
             if(not numberBox['text']):
-                if(platform.system() == 'Darwin'):
-                    numberBox.configure(state='disabled', disabledbackground='#ff8a65', highlightbackground='#ff8a65')
-                else:
-                    numberBox.configure(state='disabled', background='#ff8a65')
-
-
-def createTicket():
-    global gameWindow
-    global ticketGrid
-    mianLable = Label(gameWindow, width=65, height=16,relief='ridge', borderwidth=5, bg='white')
-    mianLable.place(x=95, y=119)
-
-    xPos = 105
-    yPos = 130
-    for row in range(0, 3):
-        rowList = []
-        for col in range(0, 9):
-            if(platform.system() == 'Darwin'):
-                boxButton = Button(gameWindow,
-                font = ("Chalkboard SE",18),
-                borderwidth=3,
-                pady=23,
-                padx=-22,
-                bg="#fff176",
-                highlightbackground='#fff176',
-                activebackground='#c5e1a5')
-
-                boxButton.configure(command = lambda boxButton=boxButton : markNumber(boxButton))
-
-                boxButton.place(x=xPos, y=yPos)
-            else:
-                boxButton = tk.Button(gameWindow, font = ("Chalkboard SE",30), width=3, height=2,borderwidth=5, bg="#fff176")
-                boxButton.configure(command = lambda boxButton=boxButton : markNumber(boxButton))
-                boxButton.place(x=xPos, y=yPos)
-
-            rowList.append(boxButton)
-            xPos += 64
-        ticketGrid.append(rowList)
-        xPos = 105
-        yPos +=82
-
+                numberBox.configure(state='disabled', disabledbackground='#ff8a65', highlightbackground='#ff8a65')
 
 
 def gameWindow():
@@ -192,7 +133,7 @@ def gameWindow():
     createTicket()
     placeNumbers()
 
-    flashNumberLabel = canvas2.create_text(400,screen_height/1.3, text = "Waiting for other to join...", font=("Chalkboard SE",30), fill="#3e2723")
+    flashNumberLabel = canvas2.create_text(400,screen_height/2.3, text = "Waiting for other players to join...", font=("Chalkboard SE",30), fill="#3e2723")
 
     gameWindow.resizable(True, True)
     gameWindow.mainloop()
@@ -212,8 +153,6 @@ def saveName():
     SERVER.send(playerName.encode())
 
     gameWindow()
-
-
 
 def askPlayerName():
     global playerName
@@ -239,30 +178,14 @@ def askPlayerName():
     nameEntry = Entry(nameWindow, width=15, justify='center', font=('Chalkboard SE', 30), bd=5, bg='white')
     nameEntry.place(x = screen_width/7, y=screen_height/5.5 )
 
-    button = tk.Button(nameWindow, text="Save", font=("Chalkboard SE", 30),width=11, command=saveName, height=2, bd=3)
+    button = tk.Button(nameWindow, text="Save", font=("Chalkboard SE", 30),width=11, command=saveName, height=2, bg="red", bd=3)
     button.place(x = screen_width/6, y=screen_height/4)
 
     nameWindow.resizable(True, True)
     nameWindow.mainloop()
 
 
-def recivedMsg():
-    global SERVER
-    global displayedNumberList
-    global flashNumberLabel
-    global canvas2
-    global gameOver
 
-    numbers = [ str(i) for i in range(1, 91)]
-
-    while True:
-        chunk = SERVER.recv(2048).decode()
-        if(chunk in numbers and flashNumberLabel and not gameOver):
-            flashNumberList.append(int(chunk))
-            canvas2.itemconfigure(flashNumberLabel, text = chunk, font = ('Chalkboard SE', 60))
-        elif('wins the game.' in chunk):
-            gameOver = True
-            canvas2.itemconfigure(flashNumberLabel, text = chunk, font = ('Chalkboard SE', 40))
 
 
 def setup():
@@ -274,8 +197,7 @@ def setup():
     SERVER = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     SERVER.connect((IP_ADDRESS, PORT))
 
-    thread = Thread(target=recivedMsg)
-    thread.start()
+
 
     askPlayerName()
 
